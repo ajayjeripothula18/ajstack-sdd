@@ -1,21 +1,44 @@
-# rstack-sdd
+# ajstack-sdd
 
-> **Linear-Backed Spec-Driven Development + rstack**  
-> An enhanced fork of [@michaelshimeles/rstack](https://github.com/michaelshimeles/rstack) adding structured discovery, drift detection, and issue slicing to the execution engine.
+> **AJ's Linear-Backed Spec-Driven Development + rstack**  
+> An enhanced execution engine adding structured discovery, drift detection, and issue slicing to [@michaelshimeles/rstack](https://github.com/michaelshimeles/rstack).
 
 ---
 
-## Why rstack-sdd?
+## Quickstart (Zero-Setup CLI)
+
+Bootstrap `ajstack-sdd` into any project with one command:
+
+```bash
+# In your project root:
+npx github:ajayjeripothula18/ajstack-sdd init
+```
+This automatically:
+- Installs all 9 skills into `.claude/skills/` (callable via `/` in Claude Code)
+- Installs all 9 skills into `.agents/skills/` (for Antigravity, Cursor, and Codex)
+- Copies `AGENTS.md` and links `CLAUDE.md`
+- Appends `.worktrees/` to `.gitignore`
+
+### Global Installation (For All Projects)
+To make `/project-init`, `/linear-slice`, `/new-feature`, etc. accessible across **all** your projects on your machine without running per-project installs:
+```bash
+npx github:ajayjeripothula18/ajstack-sdd --global
+```
+
+---
+
+## Why ajstack-sdd?
 
 `rstack` provides an exceptional Git-Ops execution pipeline: isolated worktrees (`/new-feature`), service boundaries (`/code-structure`), visual evidence (`/evidence-driven-testing`, `/before-and-after`), and automated code reviews (`/greploop`).
 
 However, for developers building products from scratch (0-to-1) or working on complex brownfield codebases, starting at `/new-feature` skips the architectural foundation. 
 
-`rstack-sdd` bridges this gap **without introducing markdown state clutter**:
+`ajstack-sdd` bridges this gap **without introducing markdown state clutter**:
 1. **Zero-bloat system design**: Creates and maintains 5 canonical industry-standard architecture docs in `docs/` (`PRD.md`, `ARCHITECTURE.md`, `DATA_MODEL.md`, `API.md`, `USER_FLOWS.md`, plus `adr/`).
 2. **Deterministic drift detection**: Ensures code and architectural specifications stay in sync before new tasks are sliced.
 3. **Linear & GitHub parity**: Slices tasks into 4 concrete issue types (`Feature`, `Refactor`, `Bug`, `Debt`) using free-tier-compatible native labels (`spec:ready`, `type:*`).
 4. **Complete execution safety**: Enforces that coding agents never begin work on an issue until the acceptance criteria are codified under `spec:ready`.
+5. **Compute-Aware Worktree Isolation**: Enforces dedicated `.worktrees/` isolation on shared host machines to prevent workspace pollution and port collisions, while seamlessly supporting cloud agent sandboxes (Cursor Cloud, Orgo, Codespaces).
 
 ---
 
@@ -72,25 +95,26 @@ docs/
 
 ## Installation
 
-### For Claude Code
-Clone the repository and copy or link the skills to your local or global Claude skills folder:
+### Manual Installation
+
+#### For Claude Code
 ```bash
-git clone https://github.com/ajayjeripothula18/rstack-sdd.git
+git clone https://github.com/ajayjeripothula18/ajstack-sdd.git
 mkdir -p ~/.claude/skills/
-cp -r rstack-sdd/{project-init,linear-slice,new-feature,code-structure,evidence-driven-testing,before-and-after,greploop,greploop-apps,unslop} ~/.claude/skills/
+cp -r ajstack-sdd/{project-init,linear-slice,new-feature,code-structure,evidence-driven-testing,before-and-after,greploop,greploop-apps,unslop} ~/.claude/skills/
 ```
 In your project root, copy `AGENTS.md` and add a `CLAUDE.md` referencing it:
 ```bash
-cp rstack-sdd/AGENTS.md /path/to/your/project/
+cp ajstack-sdd/AGENTS.md /path/to/your/project/
 echo "@AGENTS.md" > /path/to/your/project/CLAUDE.md
 ```
 
-### For Antigravity / Cursor / Codex
+#### For Antigravity / Cursor / Codex
 In your project repository:
 ```bash
 mkdir -p .agents/skills/
-cp -r rstack-sdd/{project-init,linear-slice,new-feature,code-structure,evidence-driven-testing,before-and-after,greploop,greploop-apps,unslop} .agents/skills/
-cp rstack-sdd/AGENTS.md .
+cp -r ajstack-sdd/{project-init,linear-slice,new-feature,code-structure,evidence-driven-testing,before-and-after,greploop,greploop-apps,unslop} .agents/skills/
+cp ajstack-sdd/AGENTS.md .
 ```
 
 ---

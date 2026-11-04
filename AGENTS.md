@@ -47,7 +47,9 @@ Run `/linear-slice` before picking up or starting any feature, refactor, bug, or
 ---
 
 ### Phase 2: EXECUTION (Per Linear/GitHub Issue)
-1. **Isolate**: Run `/new-feature` to create a dedicated Git worktree and branch from `origin/main` (e.g. `feat/ADS-24-slug`). Never build directly on `main`.
+1. **Isolate**: Run `/new-feature` to create a dedicated Git worktree and branch from `origin/main` (e.g. `feat/ADS-24-slug`).
+   - **Shared-Host Environments**: When agents run on the developer's local machine (Claude Code, Antigravity, Cursor, Codex), worktrees must live inside `.worktrees/<feature-name>` (gitignored at project root). Link dependencies (`ln -s ../node_modules .worktrees/<feature-name>/node_modules`) to conserve disk space. Never build directly on `main` or place worktrees loose in the workspace root.
+   - **Cloud-Agent Environments**: When running in dedicated cloud VM sandboxes (Cursor Cloud Agents, Orgo, GitHub Codespaces), ephemeral container isolation manages the environment.
 2. **Build**: Run `/code-structure` when choosing boundaries. Actions orchestrate domain rules; services implement reusable mechanics. Reference patterns in `docs/ARCHITECTURE.md`.
 3. **Prove**: Run relevant checks and prove the issue's Acceptance Criteria.
    - Use `/evidence-driven-testing` for changed runtime behavior: record the failure before fixing it and the success afterward.

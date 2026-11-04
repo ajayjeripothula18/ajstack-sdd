@@ -35,20 +35,22 @@ prefix alone. Otherwise follow all steps.
 
 4. **Create the worktree** from the repo root:
 
-   ```bash
-   git worktree add <worktrees-dir>/<task-name> \
-     -b <branch-prefix>/<task-name> origin/main
-   ```
-
-   Use a directory outside the checkout, or a **gitignored** directory inside
-   it, so worktrees cannot be committed by accident. Use a
-   consistent branch prefix (e.g. `agent/`). Follow the repo's conventions
-   if it defines them.
+   **Compute Environment Guidance:**
+   - **Shared-Host Environments (Local machine)**: When running agents on a shared host machine (Claude Code CLI, Antigravity local, Cursor local, Codex), agents share the developer's physical filesystem and ports. In this setup, **always** isolate worktrees inside a dedicated, gitignored directory:
+     ```bash
+     git worktree add .worktrees/<task-name> -b feat/<task-name> origin/main
+     ```
+     Link dependencies to avoid duplicating disk space:
+     ```bash
+     ln -s ../node_modules .worktrees/<task-name>/node_modules
+     ```
+     Ensure `.worktrees/` is present in `.gitignore`. Never place worktrees loose in the project root.
+   - **Cloud-Agent Environments**: When running in dedicated cloud VM sandboxes (e.g. Cursor Cloud Background Agents, Orgo cloud agents, GitHub Codespaces, remote containerized VMs), the cloud runner provisions an isolated machine per agent where container-level isolation is managed by the platform.
 
 5. **Enter and verify**:
 
    ```bash
-   cd <worktrees-dir>/<task-name>
+   cd .worktrees/<task-name>
    git branch --show-current   # must print your new branch, not main
    ```
 

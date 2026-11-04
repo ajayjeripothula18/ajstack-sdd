@@ -1,0 +1,44 @@
+{
+  "name": "ajstack-sdd",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AJ's Spec-Driven Development (SDD) agent workflow and skills for Claude Code, Antigravity, and Cursor",
+  "main": "bin/cli.js",
+  "bin": {
+    "ajstack-sdd": "./bin/cli.js",
+    "ajstack": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "AGENTS.md",
+    "project-init",
+    "linear-slice",
+    "new-feature",
+    "code-structure",
+    "evidence-driven-testing",
+    "before-and-after",
+    "greploop",
+    "greploop-apps",
+    "unslop"
+  ],
+  "keywords": [
+    "agent-skills",
+    "claude-code",
+    "antigravity",
+    "cursor",
+    "spec-driven-development",
+    "ajstack",
+    "sdd",
+    "rstack"
+  ],
+  "author": "Ajay Jeripothula",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ajayjeripothula18/ajstack-sdd.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ajayjeripothula18/ajstack-sdd/issues"
+  },
+  "homepage": "https://github.com/ajayjeripothula18/ajstack-sdd#readme"
+}
