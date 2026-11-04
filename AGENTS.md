@@ -1,38 +1,66 @@
-# Agent workflow
+# Agent workflow (Linear-Backed SDD + rstack)
 
 Choose the applicable parts of this workflow for the requested task. It governs
-this repo and can be copied into other repos with their checks and conventions.
+this repo and establishes a disciplined bridge from discovery to verified shipping.
 
 - Read-only reviews, explanations, and investigations need no worktree, commit,
   PR, or Greptile run. If an investigation leads to edits, isolate those edits.
-- Code changes use isolation, relevant architecture guidance, checks, and
-  evidence of the behavior changed. Capture a failure before fixing it.
+- Greenfield setups and major architectural resets begin in Phase 0.
+- All code changes originate from a sliced issue with the `spec:ready` label.
 - Small documentation edits use an isolated branch and relevant content or link
   checks. Do not manufacture runtime evidence or require a bot review for them.
 - Ship when the task calls for a PR or a completed repository change. A request
   for a plan, review, or local experiment does not imply publishing it.
 
-## Workflow
+---
 
-1. **Isolate.** Use `/new-feature` before repository edits. Start from
-   `origin/main`, or preserve a worktree already assigned to this task.
-   Never build on `main`.
-2. **Build.** Use `/code-structure` when extracting shared operations or
-   choosing boundaries. Follow the project's existing architecture; the
-   service layer pattern is a default for projects without a convention.
-3. **Prove.** Run relevant checks. Use `/evidence-driven-testing` for changed
-   runtime behavior: record the failure before fixing it and the success
-   afterward. For documentation, inspect the changed instructions and verify
-   runnable examples and links as applicable.
-4. **Ship.** Open the PR with evidence appropriate to the change. Use
-   `/before-and-after` when screenshots help; use output pairs for CLI changes.
-   Run `/greploop` for code or executable workflow changes, or when requested.
-   Aim for **5/5 with zero unresolved actionable Greptile findings** on the
-   current commit. Stop at the configured iteration cap, a review timeout, or
-   an unavailable integration and report the actual score and remaining work.
-   Do not claim success or raise the cap automatically. Present the PR URL.
+## The 3-Phase Lifecycle
 
-Ship-beat notes:
+### Phase 0: INITIATE (Greenfield / Major Pivot)
+Run `/project-init` to establish or reverse-engineer foundational specs in `docs/`:
+- **Greenfield**: Complete the conversational, delta-based interview (max 2–3 turns) until the agent signals readiness.
+- **Brownfield**: Deterministic scan of dependencies, configs, routes, and schemas with `[CONFIRMED]`, `[INFERRED]`, and `[MISSING]` tags.
+- **Outputs (5 canonical docs + `adr/`)**:
+  - `docs/PRD.md` — Vision, personas, user stories, out-of-scope boundaries.
+  - `docs/ARCHITECTURE.md` — Stack, component boundaries, state mgmt, a11y & responsive rules.
+  - `docs/DATA_MODEL.md` — Domain entities, schemas, relationships, storage contracts.
+  - `docs/API.md` — Route definitions, request/response contracts, external services.
+  - `docs/USER_FLOWS.md` — Mermaid flowcharts, screen states, navigation transitions.
+  - `docs/adr/` — `0001-record-architecture-decisions.md` (meta-ADR), `0002-tech-stack.md`, `template.md`.
+
+**Gate**: Human reviews and approves generated `docs/` before development begins.
+
+---
+
+### Phase 1: SLICE (Initial Backlog or Mid-Development)
+Run `/linear-slice` before picking up or starting any feature, refactor, bug, or technical debt:
+1. **Drift Check**: Runs deterministic package/grep checks between `docs/` and active code. If drift is found, prompts to sync docs first.
+2. **Select Issue Type**: Feature, Refactor, Bug, or Debt.
+3. **Sizing Rule**: Every issue must represent **one shippable PR (< 400 lines of diff, 1–2 days)**. Split larger tasks into sequential sub-issues.
+4. **Target Issue Creation**: Creates issue in Linear (default) or GitHub Issues (fallback) applying:
+   - Label: `spec:ready`
+   - Label: `type:feature` | `type:refactor` | `type:bug` | `type:debt`
+   - State: `Todo` (Linear native) / `open` (GitHub)
+
+**Gate**: Coding agents must **never** begin code implementation on an issue lacking the **`spec:ready`** label. If an unsliced issue is assigned, stop and run `/linear-slice` first.
+
+---
+
+### Phase 2: EXECUTION (Per Linear/GitHub Issue)
+1. **Isolate**: Run `/new-feature` to create a dedicated Git worktree and branch from `origin/main` (e.g. `feat/ADS-24-slug`). Never build directly on `main`.
+2. **Build**: Run `/code-structure` when choosing boundaries. Actions orchestrate domain rules; services implement reusable mechanics. Reference patterns in `docs/ARCHITECTURE.md`.
+3. **Prove**: Run relevant checks and prove the issue's Acceptance Criteria.
+   - Use `/evidence-driven-testing` for changed runtime behavior: record the failure before fixing it and the success afterward.
+   - For UI/frontend changes, use `/before-and-after` to capture visual comparison screenshots.
+4. **Ship**:
+   - Run `/unslop` over anything a person will read (commit messages, PR title, PR body).
+   - Open PR linking the issue (`Closes ADS-XX`).
+   - Run `/greploop` (or `/greploop-apps` for large PRs). Aim for **5/5 with zero unresolved actionable Greptile findings** on the current commit.
+   - Present the PR URL upon completion. Do not merge unless explicitly instructed.
+
+---
+
+## Ship-beat notes
 
 - `/before-and-after` drives the `@vercel/before-and-after` CLI. `--markdown`
   uploads the pair and prints a PR-ready table; it also accepts existing
@@ -42,6 +70,8 @@ Ship-beat notes:
 - The default upload host (0x0.st) is public — fine for ordinary UI shots;
   pass `--upload-url` for anything sensitive.
 
+---
+
 ## Writing for humans
 
 Run `/unslop` over anything a person will read, before you commit, post, or
@@ -50,6 +80,8 @@ comments, and the closing reply. It strips AI tells (em dashes, filler,
 hedging, chatbot phrases, puffery, bold-label lists) and replaces fancy
 words with plain ones and passive voice with active. Apply it to text you
 wrote or changed, not to prose you didn't touch.
+
+---
 
 ## Multi-agent rules
 
@@ -71,46 +103,29 @@ wrote or changed, not to prose you didn't touch.
 - If a conflict can't be resolved confidently, stop and report instead of
   guessing.
 
-## Completing a task that ships
-
-1. Keep changes limited to the assigned task.
-2. Run the applicable checks listed below.
-3. Assemble applicable evidence into before/after pairs or content-check results.
-4. Commit with a clear message, rebase onto the latest `origin/main`, and
-   rerun the checks.
-5. Push (`git push -u origin <branch>`; after rebasing an already-pushed
-   branch, `--force-with-lease`).
-6. Open the PR. The body must explain what changed, how it was tested (every
-   claim backed by evidence), before/after proof, and any risks or follow-up
-   work. Run the title and body through `/unslop` before posting.
-7. Run `/greploop` when applicable, with the success and stopping conditions
-   above. `/greploop-apps` selects the alternate trigger in that same workflow.
-8. End by presenting the PR URL.
-
-Do not merge the PR unless explicitly instructed. Keep the worktree until
-the PR is merged or closed.
+---
 
 ## Checks in this repo
 
-- `python3 -m pytest tests/ -q` runs the recorder and workflow regression tests.
-  Requires Python 3.10+, pytest, ffmpeg and ffprobe with libx264 and the ass filter.
 - `git diff --check` checks whitespace in the change.
-- For changes to headless capture, run the documented Playwright example in an
-  isolated directory and verify its output. Node, npm, and Chromium are needed.
-- Validate edited skill frontmatter and local references. The installed
-  skill-creator validator does not recognize the existing `compatibility` field;
-  report that validator limitation instead of removing useful metadata.
+- `npm run build` / `npm run lint` / `npm test` when the web application is scaffolded.
+- For headless runtime verification, run the documented Playwright capture example and verify output (Node 20+, npm, Chromium required).
+- Check compliance against specifications in `docs/` (`PRD.md`, `ARCHITECTURE.md`, `DATA_MODEL.md`, `API.md`, `USER_FLOWS.md`).
+- Validate edited skill frontmatter and local references.
+- Keep generated evidence under the ignored `.artifacts/` directory.
 
-Tests use synthetic recorder input and local API fixtures. They do not prove
-native desktop capture on every OS, live uploads, or a live Greptile review.
-Keep generated evidence under the ignored `.artifacts/` directory.
+---
 
 ## Skill sources
 
-| Skill | Source |
-|---|---|
-| `new-feature`, `code-structure`, `evidence-driven-testing` | this repo |
-| `before-and-after` | this repo, vendored from [vercel-labs/before-and-after](https://github.com/vercel-labs/before-and-after) (or `npx skills add vercel-labs/before-and-after`) |
-| `greploop` | this repo, vendored from [greptileai/skills](https://github.com/greptileai/skills) |
-| `greploop-apps` | this repo, compatibility entrypoint requiring `greploop` |
-| `unslop` | this repo, vendored from [cursor/plugins (pstack)](https://github.com/cursor/plugins/tree/main/pstack/skills/unslop); frontmatter edited so agents apply it unprompted (`disable-model-invocation` dropped, description scoped to text the agent writes or edits for people), body untouched |
+| Skill | Role | Source |
+|---|---|---|
+| `project-init` | Phase 0: Greenfield / Brownfield system discovery & docs generation | this repo |
+| `linear-slice` | Phase 1: Drift detection, issue slicing (4 types), Linear/GitHub gates | this repo |
+| `new-feature` | Phase 2: Worktree isolation per issue branch | rstack |
+| `code-structure` | Phase 2: Service Layer architecture (Actions vs Services) | rstack |
+| `evidence-driven-testing` | Phase 2: Runtime/visual evidence recording & Playwright probes | rstack |
+| `before-and-after` | Phase 2: Before/after visual diff screenshot tables | rstack (vercel-labs) |
+| `greploop` | Phase 2: Bounded Greptile automated review cycles | rstack (greptileai) |
+| `greploop-apps` | Phase 2: Compatibility entrypoint for large PRs | rstack (greptileai) |
+| `unslop` | Cross-cutting: Strips AI tone from PRs, commits, and human copy | rstack (pstack) |
