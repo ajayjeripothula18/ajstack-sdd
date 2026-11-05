@@ -78,3 +78,10 @@ Removing patterns is half the job. Sterile, voiceless writing is just as obvious
 29. **Active voice.** Prefer it. Catch "is/are/was/were + past participle" and name the actor: "queries are validated" becomes "the compiler validates queries", "the file is parsed by the loader" becomes "the loader parses the file". Passive is fine only when the actor is unknown or genuinely doesn't matter.
 30. **Cut adverbs, or use a stronger verb.** "runs quickly" becomes "is fast" or the number. "significantly improves" becomes the measured delta. An adverb propping up a weak verb means the verb is wrong.
 31. **Prefer the plain word.** "utilize" becomes "use", "leverage" becomes "use", "facilitate" becomes "help", "numerous" becomes "many", "in the event that" becomes "if". The fancier synonym is rarely clearer.
+
+### Code Commentary & In-Source Slop
+
+32. **Conversational code comments.** `// Here we handle the edge case...`, `// Now we fetch user details...`, `// Loop through items...`. If the code is readable, delete the comment. Code explains *what* and *how*; only comments explaining non-obvious *why* (hardware quirks, external API bugs, or mathematical invariants) should remain.
+33. **Parroting docstrings.** Docstrings that merely restate function names or type signatures (`/** @param {string} id - The id */`). Delete unless documenting non-obvious units of measurement or error conditions.
+34. **Banner dividers and section decorations.** `// ==========================`, `// ------- HELPERS --------`. Use clear file organization or modular exports instead of ASCII divider noise.
+35. **Commented-out zombie code.** `// const oldWay = doThings();`. Never leave commented-out code blocks behind. Delete them; git preserves history.

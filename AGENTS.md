@@ -47,18 +47,54 @@ Run `/linear-slice` before picking up or starting any feature, refactor, bug, or
 ---
 
 ### Phase 2: EXECUTION (Per Linear/GitHub Issue)
-1. **Isolate**: Run `/new-feature` to create a dedicated Git worktree and branch from `origin/main` (e.g. `feat/ADS-24-slug`).
+Run `/sdd-flow` to orchestrate this phase end-to-end, or execute the steps individually:
+
+1. **Investigate**: For bugs, regressions, or performance bottlenecks, run `/forensics` before modifying code. Attack the premise, inspect traces/logs, and write an isolated failing reproduction script or test.
+2. **Isolate**: Run `/new-feature` to create a dedicated Git worktree and branch from `origin/main` (e.g. `feat/ADS-24-slug`).
    - **Shared-Host Environments**: When agents run on the developer's local machine (Claude Code, Antigravity, Cursor, Codex), worktrees must live inside `.worktrees/<feature-name>` (gitignored at project root). Link dependencies (`ln -s ../node_modules .worktrees/<feature-name>/node_modules`) to conserve disk space. Never build directly on `main` or place worktrees loose in the workspace root.
    - **Cloud-Agent Environments**: When running in dedicated cloud VM sandboxes (Cursor Cloud Agents, Orgo, GitHub Codespaces), ephemeral container isolation manages the environment.
-2. **Build**: Run `/code-structure` when choosing boundaries. Actions orchestrate domain rules; services implement reusable mechanics. Reference patterns in `docs/ARCHITECTURE.md`.
-3. **Prove**: Run relevant checks and prove the issue's Acceptance Criteria.
+3. **Build**: Run `/code-structure` when choosing boundaries. Actions orchestrate domain rules; services implement reusable mechanics. Apply **Subtractive Discipline**: delete before adding, avoid premature wrappers/interfaces, and eliminate explanatory comment slop. Reference patterns in `docs/ARCHITECTURE.md`.
+4. **Prove**: Run relevant checks and prove the issue's Acceptance Criteria.
    - Use `/evidence-driven-testing` for changed runtime behavior: record the failure before fixing it and the success afterward.
    - For UI/frontend changes, use `/before-and-after` to capture visual comparison screenshots.
-4. **Ship**:
-   - Run `/unslop` over anything a person will read (commit messages, PR title, PR body).
+5. **Interrogate**: Run `/interrogate` locally in the worktree against `git diff origin/main` prior to pushing. Discard subjective opinions: any valid critique must be backed by an executable failing test or repro. Fix all confirmed issues locally.
+6. **Ship**:
+   - Run `/unslop` over anything a person will read (commit messages, PR title, PR body) and across modified source code comments.
    - Open PR linking the issue (`Closes ADS-XX`).
    - Run `/greploop` (or `/greploop-apps` for large PRs). Aim for **5/5 with zero unresolved actionable Greptile findings** on the current commit.
    - Present the PR URL upon completion. Do not merge unless explicitly instructed.
+
+---
+
+## Senior Subtractive Engineering Principles
+
+When executing Phase 2 changes, apply these 5 principles:
+1. **Subtract Before You Add**: Solve problems by deleting or simplifying existing code before creating new functions, layers, or configuration.
+2. **Attack the Premise**: Do not blindly accept bug reports or feature requests without verifying causality against the actual codebase.
+3. **Laziness Protocol**: If an invariant is enforced by types or upstream guards, do not write defensive redundant wrappers downstream.
+4. **Zero Explanatory Comment Slop**: Never write comments explaining what readable code does. Reserve comments strictly for non-obvious *why* (hardware quirks, external bug workarounds, mathematical formulas).
+5. **Prove It Works**: No assertion is accepted without empirical execution evidence (passing tests, screen recordings, or visual diffs).
+
+---
+
+## In-Session Task Tracking & Context Guarding
+
+### Active Task Tracker Template
+During Phase 2 execution, print and update this compact progress block in chat across milestones:
+```markdown
+### SDD Flow Status: [ISSUE-KEY] <slug>
+- [ ] 1. Forensics & Investigation (root cause & premise validated)
+- [ ] 2. Worktree Isolation (`.worktrees/<feature-name>`)
+- [ ] 3. Subtractive Implementation & Unit Tests
+- [ ] 4. Empirical Evidence Recording (`evidence.py` / Playwright)
+- [ ] 5. In-Session Interrogation (adversarial diff audit)
+- [ ] 6. Ship (Unslop PR & Greploop 5/5)
+```
+
+### Context Window Protection
+- **Redirect Heavy Output**: Send verbose test suites, build outputs, and server logs to `.artifacts/scratch/<task>-output.log`.
+- **Structured Chat Summaries**: In chat, report only the exact command executed, exit code, and a concise 3-line diagnostic summary.
+- **Multi-Model Tiering**: Review `docs/MODELS.md` for recommended model roles (Orchestrator, Builder, Interrogator, Hygiene).
 
 ---
 
@@ -124,10 +160,13 @@ wrote or changed, not to prose you didn't touch.
 |---|---|---|
 | `project-init` | Phase 0: Greenfield / Brownfield system discovery & docs generation | this repo |
 | `linear-slice` | Phase 1: Drift detection, issue slicing (4 types), Linear/GitHub gates | this repo |
+| `sdd-flow` | Phase 2: Hybrid execution orchestrator (Investigate -> Build -> Interrogate -> Ship) | this repo |
+| `forensics` | Phase 2: Read-only root cause investigation and premise validation | this repo |
 | `new-feature` | Phase 2: Worktree isolation per issue branch | rstack |
-| `code-structure` | Phase 2: Service Layer architecture (Actions vs Services) | rstack |
+| `code-structure` | Phase 2: Service Layer architecture & Subtractive Principles | rstack |
 | `evidence-driven-testing` | Phase 2: Runtime/visual evidence recording & Playwright probes | rstack |
 | `before-and-after` | Phase 2: Before/after visual diff screenshot tables | rstack (vercel-labs) |
+| `interrogate` | Phase 2: In-session adversarial pre-flight review & repro tests | this repo |
 | `greploop` | Phase 2: Bounded Greptile automated review cycles | rstack (greptileai) |
 | `greploop-apps` | Phase 2: Compatibility entrypoint for large PRs | rstack (greptileai) |
-| `unslop` | Cross-cutting: Strips AI tone from PRs, commits, and human copy | rstack (pstack) |
+| `unslop` | Cross-cutting: Strips AI tone from PRs, commits, and source code comments | rstack (pstack) |

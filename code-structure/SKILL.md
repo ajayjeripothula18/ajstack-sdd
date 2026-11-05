@@ -112,12 +112,32 @@ if (user.marketingOptIn) {
 await sendWelcomeEmail({ to: invitee.email, name: invitee.name });
 ```
 
+## Senior Subtractive Engineering Standards
+
+When designing or modifying code, adopt a **subtractive mindset**. High code quality is achieved not by how much you build, but by how much unnecessary complexity you prevent or remove.
+
+### 1. Subtract Before You Add
+Before writing new utility functions or classes, inspect the existing codebase:
+- Can an existing function be pruned, generalized, or deleted?
+- Can this feature be solved by removing an artificial constraint rather than writing new orchestration?
+- Aim for negative line count where possible. Every line of code added is a line that must be tested, debugged, and maintained.
+
+### 2. No Defensive Indirection
+- **No speculative wrappers**: Never wrap an external library or SDK in a custom "adapter" unless multiple competing implementations actually exist today.
+- **No premature interfaces**: Avoid defining single-implementation interfaces (`IUserService` with only `UserService`). Write concrete classes or plain functions until polymorphism is proven necessary.
+- **No defensive null checks for impossible states**: If an invariant is guaranteed by your type system or upstream validation, do not clutter downstream functions with redundant fallback branches.
+
+### 3. Kill Dead Code and Legacy Comments
+- When refactoring, immediately delete superseded functions, unused variables, and orphaned imports.
+- Never leave commented-out code blocks behind. Version control (git) preserves history; your source tree should only contain active, working code.
+
 ## Mental Model
 
 ```
 Existing architecture? → Follow its boundaries
 No convention? → Prefer actions for orchestration and services for operations
 Extraction? → Name its concrete benefit before adding another layer
+New code? → Check if subtraction or deletion can solve the problem first
 ```
 
 Keep responsibilities clear, dependencies explicit, and side effects visible.

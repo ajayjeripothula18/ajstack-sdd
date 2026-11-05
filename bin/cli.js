@@ -17,13 +17,16 @@ const PACKAGE_ROOT = path.resolve(__dirname, '..');
 const SKILLS = [
   { name: 'project-init', phase: 'Phase 0 (Initiate)', desc: 'Greenfield delta-interview & Brownfield code discovery into canonical docs/' },
   { name: 'linear-slice', phase: 'Phase 1 (Slice)', desc: 'Fast drift detection, 4 issue templates, and spec:ready issue creation' },
+  { name: 'sdd-flow', phase: 'Phase 2 (Execute)', desc: 'Hybrid orchestrator: Investigate -> Isolate -> Build -> Interrogate -> Ship' },
+  { name: 'forensics', phase: 'Phase 2 (Execute)', desc: 'Read-only root cause investigation and reproduction script generation' },
   { name: 'new-feature', phase: 'Phase 2 (Execute)', desc: 'Dedicated Git worktree isolation in .worktrees/<name> from origin/main' },
-  { name: 'code-structure', phase: 'Phase 2 (Execute)', desc: 'Service layer architecture: Actions orchestrate, Services implement mechanics' },
+  { name: 'code-structure', phase: 'Phase 2 (Execute)', desc: 'Service layer architecture & senior subtractive engineering standards' },
   { name: 'evidence-driven-testing', phase: 'Phase 2 (Execute)', desc: 'Annotated video recordings and Playwright probes proving acceptance criteria' },
   { name: 'before-and-after', phase: 'Phase 2 (Execute)', desc: 'Visual UI screenshot diff comparisons formatted into PR-ready markdown tables' },
-  { name: 'unslop', phase: 'Cross-cutting', desc: 'Cuts AI tells, filler, and corporate jargon from text written for human readers' },
+  { name: 'interrogate', phase: 'Phase 2 (Execute)', desc: 'Pre-flight adversarial diff audit requiring executable failing tests' },
   { name: 'greploop', phase: 'Phase 2 (Execute)', desc: 'Automated Greptile code review and fix cycles targeting clean 5/5 score' },
-  { name: 'greploop-apps', phase: 'Phase 2 (Execute)', desc: 'Compatibility trigger (@greptile-apps) for large PRs' }
+  { name: 'greploop-apps', phase: 'Phase 2 (Execute)', desc: 'Compatibility trigger (@greptile-apps) for large PRs' },
+  { name: 'unslop', phase: 'Cross-cutting', desc: 'Cuts AI tells and comment slop from PRs, commits, docs, and source code' }
 ];
 
 function copyDirRecursive(src, dest) {
@@ -105,6 +108,57 @@ function runInit(targetDir = process.cwd(), force = false) {
   console.log('• Antigravity agents can now access skills via .agents/skills/\n');
 }
 
+function runUpgrade(targetDir = process.cwd()) {
+  console.log('\n🔄 Upgrading ajstack-sdd skills in:', targetDir);
+
+  const claudeSkillsDir = path.join(targetDir, '.claude', 'skills');
+  const agySkillsDir = path.join(targetDir, '.agents', 'skills');
+
+  let updatedCount = 0;
+  const hasAgy = fs.existsSync(agySkillsDir);
+  const hasClaude = fs.existsSync(claudeSkillsDir);
+
+  if (!hasAgy && !hasClaude) {
+    console.log('⚠️ No existing .agents/skills or .claude/skills found.');
+    console.log('   Run `npx ajstack-sdd init` instead to bootstrap the project.\n');
+    return;
+  }
+
+  let claudeIsSymlinkToAgy = false;
+  if (hasClaude) {
+    try {
+      const stats = fs.lstatSync(claudeSkillsDir);
+      if (stats.isSymbolicLink()) {
+        const realClaude = fs.realpathSync(claudeSkillsDir);
+        const realAgy = hasAgy ? fs.realpathSync(agySkillsDir) : null;
+        if (realAgy && realClaude === realAgy) {
+          claudeIsSymlinkToAgy = true;
+        }
+      }
+    } catch {
+      // fallback
+    }
+  }
+
+  console.log('\n📦 Syncing skills to latest version:');
+  for (const skill of SKILLS) {
+    const skillSrc = path.join(PACKAGE_ROOT, skill.name);
+    if (fs.existsSync(skillSrc)) {
+      if (hasAgy) {
+        copyDirRecursive(skillSrc, path.join(agySkillsDir, skill.name));
+      }
+      if (hasClaude && !claudeIsSymlinkToAgy) {
+        copyDirRecursive(skillSrc, path.join(claudeSkillsDir, skill.name));
+      }
+      console.log(`  ✓ Synced ${skill.name} (${skill.phase})`);
+      updatedCount++;
+    }
+  }
+
+  console.log(`\n🎉 Successfully upgraded ${updatedCount} skills in ${targetDir}!`);
+  console.log('ℹ Existing AGENTS.md was preserved. Review ajstack-sdd/AGENTS.md for new Phase 2 skills (/sdd-flow, /forensics, /interrogate).\n');
+}
+
 function runGlobal() {
   const homeDir = os.homedir();
   const globalClaude = path.join(homeDir, '.claude', 'skills');
@@ -124,11 +178,11 @@ function runGlobal() {
   }
 
   console.log('\n🎉 Global installation complete!');
-  console.log('You can now use all 9 skills across ANY project via / slash commands in Claude Code and globally in Antigravity!\n');
+  console.log(`You can now use all ${SKILLS.length} skills across ANY project via / slash commands in Claude Code and globally in Antigravity!\n`);
 }
 
 function runList() {
-  console.log('\n📋 ajstack-sdd Skills Suite (9 Skills):\n');
+  console.log(`\n📋 ajstack-sdd Skills Suite (${SKILLS.length} Skills):\n`);
   for (const skill of SKILLS) {
     console.log(`  • /${skill.name.padEnd(24)} [${skill.phase}]`);
     console.log(`    ${skill.desc}\n`);
@@ -143,13 +197,16 @@ USAGE:
   npx ajstack-sdd [command] [options]
 
 COMMANDS:
-  init            Bootstrap skills, AGENTS.md, CLAUDE.md, and .gitignore in the current project
+  init            Bootstrap skills, AGENTS.md, CLAUDE.md, and .gitignore in the target project
+  upgrade         Upgrade all installed skills to latest version without modifying custom AGENTS.md
   --global, -g    Install skills globally to ~/.claude/skills and ~/.gemini/config/skills
   list            List all available skills and descriptions
   --help, -h      Show this help message
 
 EXAMPLES:
   npx ajstack-sdd init               # Setup in current repo
+  npx ajstack-sdd upgrade            # Upgrade skills in current repo
+  npx ajstack-sdd upgrade /path/to   # Upgrade skills in specific directory
   npx ajstack-sdd --global           # Install globally on machine
   npx github:ajayjeripothula18/ajstack-sdd init   # Run directly via GitHub
 `);
@@ -160,9 +217,17 @@ const args = process.argv.slice(2);
 const command = args[0] || '--help';
 
 switch (command) {
-  case 'init':
-    runInit(process.cwd(), args.includes('--force'));
+  case 'init': {
+    const targetDir = args[1] && !args[1].startsWith('-') ? path.resolve(args[1]) : process.cwd();
+    runInit(targetDir, args.includes('--force'));
     break;
+  }
+  case 'upgrade':
+  case 'update': {
+    const targetDir = args[1] && !args[1].startsWith('-') ? path.resolve(args[1]) : process.cwd();
+    runUpgrade(targetDir);
+    break;
+  }
   case '--global':
   case '-g':
   case 'global':

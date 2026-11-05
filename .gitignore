@@ -3,3 +3,9 @@
 __pycache__/
 *.py[cod]
 .artifacts/
+.agents/
+.claude/
+
+# Worktrees (ajstack-sdd)
+.worktrees/
+worktrees/
