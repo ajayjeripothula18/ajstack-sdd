@@ -34,10 +34,10 @@ To guard context and maintain velocity, print and update this compact task track
 ### SDD Flow Status: [ISSUE-KEY] <slug>
 - [ ] 1. Forensics & Investigation (root cause & premise validated)
 - [ ] 2. Worktree Isolation (`.worktrees/<feature-name>`)
-- [ ] 3. Subtractive Implementation & Unit Tests
-- [ ] 4. Empirical Evidence Recording (`evidence.py` / Playwright)
-- [ ] 5. In-Session Interrogation (adversarial diff audit)
-- [ ] 6. Ship (Unslop PR & Greploop 5/5)
+- [ ] 3. Subtractive Implementation (`/code-structure` boundaries verified)
+- [ ] 4. Empirical Evidence Recording (`/evidence-driven-testing`)
+- [ ] 5. Pre-Commit Interrogation Gate (`/interrogate` - MUST PASS BEFORE COMMIT)
+- [ ] 6. Ship (Unslop, Commit, PR & Greploop 5/5)
 ```
 
 ---
@@ -65,7 +65,7 @@ To guard context and maintain velocity, print and update this compact task track
 - Verify the dev server port answers *your* process before testing.
 
 ### Step 3: Construct (`/code-structure`)
-- Enforce Actions vs. Services boundary:
+- Enforce Actions vs. Services boundary before creating new files or helper functions:
   - **Actions**: Orchestrate business rules, user auth, state changes, user-facing errors.
   - **Services**: Reusable mechanics, provider SDK calls, shell execution.
 - Apply **Subtractive Discipline**:
@@ -78,10 +78,11 @@ To guard context and maintain velocity, print and update this compact task track
 - For UI changes: capture screenshot diffs using `/before-and-after` and generate the markdown table.
 - Use `scripts/evidence.py` for headless or desktop video recordings.
 
-### Step 5: Interrogate (`/interrogate`)
-- Run pre-flight adversarial review **locally inside the worktree before pushing**:
+### Step 5: Pre-Commit Interrogation Gate (`/interrogate`)
+- **MANDATORY GATE: RUN BEFORE `git commit` OR `git push`**.
+- Run pre-flight adversarial review **locally inside the worktree against uncommitted diff**:
   ```bash
-  git diff origin/main
+  git diff HEAD
   ```
 - The reviewer persona aggressively challenges the diff against the 6 critical audit vectors:
   - Async crash boundaries and orphaned locks or quota allocations.
@@ -91,10 +92,22 @@ To guard context and maintain velocity, print and update this compact task track
   - API contract stability and subtractive code integrity.
 - For large diffs (> 200 LOC), delegate to `DeepInvestigator` subagent.
 - **Hard Rule**: Any valid critique must include an executable failing test or repro script.
-- Fix all confirmed issues locally.
+- Require the agent to print the verdict in chat before proceeding to Step 6:
+  ```markdown
+  ### Interrogation Verdict: [APPROVED | BLOCKED]
+  - Async Crash Boundaries & Leaks: PASS
+  - Atomic Concurrency & OCC Races: PASS
+  - Secret Sanitization: PASS
+  - Schema & Validator Conformance: PASS
+  - API & Contract Stability: PASS
+  - Subtractive Code Integrity: PASS
+  ```
+- If ANY check is BLOCKED, fix all confirmed issues locally in the working tree and re-run interrogation before committing.
 
 ### Step 6: Ship (`/unslop` & `/greploop`)
 - Run `/unslop` across commit messages, PR title, and PR body.
+- **Commit changes**: Stage explicit files and commit only *after* Step 5 is marked APPROVED.
+- **Push**: Push task branch to remote (`git push -u origin <branch>`).
 - Open PR linking the Linear/GitHub issue (`Closes ADS-XX`).
 - Run `/greploop` to poll Greptile until a **5/5 clean score with 0 actionable findings** is achieved.
 

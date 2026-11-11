@@ -77,7 +77,7 @@ Before creating or writing docs, execute these safety protocols:
 ### 1. Prepare `docs/` and Existing Docs Safety (Brownfield)
 - If `docs/` does not exist: create it with `mkdir -p docs/adr`.
 - If `docs/` already exists with existing documentation:
-  - **Create a timestamped backup**: `cp -r docs/ .docs-backup-$(date +%Y%m%d%H%M%S)/`
+  - **Create a timestamped backup**: `mkdir -p .artifacts/backups && cp -r docs/ .artifacts/backups/docs-$(date +%Y%m%d%H%M%S)/`
   - **Non-destructive merge**: Do not overwrite developer-authored research, brief files, or recon notes. Preserve existing custom specs and merge new structural sections into the canonical 5 docs.
 
 ### 2. ADR Numbering Continuity

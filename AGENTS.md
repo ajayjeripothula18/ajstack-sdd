@@ -51,15 +51,29 @@ Run `/sdd-flow` to orchestrate this phase end-to-end, or execute the steps indiv
 
 1. **Investigate**: For bugs, regressions, or performance bottlenecks, run `/forensics` before modifying code. Attack the premise, inspect traces/logs, and write an isolated failing reproduction script or test.
 2. **Isolate**: Run `/new-feature` to create a dedicated Git worktree and branch from `origin/main` (e.g. `feat/ADS-24-slug`).
-   - **Shared-Host Environments**: When agents run on the developer's local machine (Claude Code, Antigravity, Cursor, Codex), worktrees must live inside `.worktrees/<feature-name>` (gitignored at project root). Link dependencies (`ln -s ../node_modules .worktrees/<feature-name>/node_modules`) to conserve disk space. Never build directly on `main` or place worktrees loose in the workspace root.
+   - **Shared-Host Environments**: When agents run on the developer's local machine (Claude Code, Antigravity, Cursor, Codex), worktrees must live inside `.worktrees/<feature-name>` (gitignored at project root). Link dependencies (`ln -s ../../node_modules .worktrees/<feature-name>/node_modules`) to conserve disk space. Never build directly on `main` or place worktrees loose in the workspace root.
    - **Cloud-Agent Environments**: When running in dedicated cloud VM sandboxes (Cursor Cloud Agents, Orgo, GitHub Codespaces), ephemeral container isolation manages the environment.
-3. **Build**: Run `/code-structure` when choosing boundaries. Actions orchestrate domain rules; services implement reusable mechanics. Apply **Subtractive Discipline**: delete before adding, avoid premature wrappers/interfaces, and eliminate explanatory comment slop. Reference patterns in `docs/ARCHITECTURE.md`.
+3. **Build**: Run `/code-structure` before creating new files or abstractions to enforce boundary discipline: Actions orchestrate domain rules; services implement reusable mechanics. Apply **Subtractive Discipline**: delete before adding, avoid premature wrappers/interfaces, and eliminate explanatory comment slop. Reference patterns in `docs/ARCHITECTURE.md`.
 4. **Prove**: Run relevant checks and prove the issue's Acceptance Criteria.
    - Use `/evidence-driven-testing` for changed runtime behavior: record the failure before fixing it and the success afterward.
    - For UI/frontend changes, use `/before-and-after` to capture visual comparison screenshots.
-5. **Interrogate**: Run `/interrogate` locally in the worktree against `git diff origin/main` prior to pushing. Discard subjective opinions: any valid critique must be backed by an executable failing test or repro. Fix all confirmed issues locally.
+5. **Pre-Commit Interrogation Gate (HARD STOP)**: Run `/interrogate` locally inside the worktree against `git diff HEAD` (or `git diff origin/main`) **PRIOR TO RUNNING `git commit` OR `git push`**.
+   - **MANDATORY GATE**: Coding agents must **NEVER** commit or push code without first outputting the Interrogation Verdict table in chat:
+     ```markdown
+     ### Interrogation Verdict: [APPROVED | BLOCKED]
+     - Async Crash Boundaries & Leaks: PASS
+     - Atomic Concurrency & OCC Races: PASS
+     - Secret Sanitization: PASS
+     - Schema & Validator Conformance: PASS
+     - API & Contract Stability: PASS
+     - Subtractive Code Integrity: PASS
+     ```
+   - Discard subjective opinions: any valid critique must be backed by an executable failing test or repro.
+   - If ANY check is BLOCKED, fix all confirmed issues locally in the working tree and re-run interrogation before committing.
 6. **Ship**:
    - Run `/unslop` over anything a person will read (commit messages, PR title, PR body) and across modified source code comments.
+   - **Commit changes**: Stage explicit files and create a clean, unslop-verified commit.
+   - Push task branch to remote: `git push -u origin <branch>`.
    - Open PR linking the issue (`Closes ADS-XX`).
    - Run `/greploop` (or `/greploop-apps` for large PRs). Aim for **5/5 with zero unresolved actionable Greptile findings** on the current commit.
    - Present the PR URL upon completion. Do not merge unless explicitly instructed.
@@ -85,10 +99,10 @@ During Phase 2 execution, print and update this compact progress block in chat a
 ### SDD Flow Status: [ISSUE-KEY] <slug>
 - [ ] 1. Forensics & Investigation (root cause & premise validated)
 - [ ] 2. Worktree Isolation (`.worktrees/<feature-name>`)
-- [ ] 3. Subtractive Implementation & Unit Tests
+- [ ] 3. Subtractive Implementation (`/code-structure` boundaries verified)
 - [ ] 4. Empirical Evidence Recording (`evidence.py` / Playwright)
-- [ ] 5. In-Session Interrogation (adversarial diff audit)
-- [ ] 6. Ship (Unslop PR & Greploop 5/5)
+- [ ] 5. Pre-Commit Interrogation Gate (`/interrogate` - MUST PASS BEFORE COMMIT)
+- [ ] 6. Ship (Unslop, Commit, PR & Greploop 5/5)
 ```
 
 ### Context Window Protection

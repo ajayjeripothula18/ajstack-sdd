@@ -43,9 +43,9 @@ When reviewing diffs exceeding 200 lines of code, or changes modifying critical 
 
 ## The 6 Critical Audit Vectors
 
-Examine the full diff against the base branch:
+Examine the uncommitted or worktree diff against the base branch **prior to running `git commit` or `git push`**:
 ```bash
-git diff origin/main
+git diff HEAD # or git diff origin/main
 ```
 
 ### 1. Async Crash Boundaries & Resource Leaks
@@ -116,8 +116,8 @@ Output the interrogation report in chat using this structure:
 ---
 
 #### Verdict: [BLOCKED | APPROVED]
-- **BLOCKED**: N critical/major findings require resolution.
-- **APPROVED**: Clean diff, zero failing reproductions, ready for `/unslop` and PR.
+- **BLOCKED**: N critical/major findings require resolution. DO NOT COMMIT.
+- **APPROVED**: Clean diff, zero failing reproductions. Proceed to commit and push.
 ```
 
 ---
@@ -128,4 +128,4 @@ Output the interrogation report in chat using this structure:
 2. Run the test to confirm it reproduces the failure (**RED**).
 3. Update the implementation code to fix the root cause (**GREEN**).
 4. Re-run `/interrogate` until the verdict is **APPROVED**.
-5. Once approved, proceed to `/unslop` and push to remote.
+5. Once approved, output the verified Interrogation Verdict in chat, proceed to `/unslop`, commit changes, and push to remote.

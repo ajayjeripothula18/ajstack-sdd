@@ -209,6 +209,9 @@ def test_start_records_baseline_and_posts_the_selected_trigger_only_once(tmp_pat
     with pytest.raises(FileExistsError):
         REVIEW.start(github, "owner/repo", 123, "@greptile-apps", path, [BOT])
     assert len(github.posts) == 1
+    # Overwrite allows re-running start with the same path
+    REVIEW.start(github, "owner/repo", 123, "@greptile-apps", path, [BOT], overwrite=True)
+    assert len(github.posts) == 2
 
 
 def running_since(minutes):

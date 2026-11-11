@@ -14,8 +14,8 @@ Bootstrap `ajstack-sdd` into any project with one command:
 npx github:ajayjeripothula18/ajstack-sdd init
 ```
 This automatically:
-- Installs all 9 skills into `.claude/skills/` (callable via `/` in Claude Code)
-- Installs all 9 skills into `.agents/skills/` (for Antigravity, Cursor, and Codex)
+- Installs all 12 skills into `.claude/skills/` (callable via `/` in Claude Code)
+- Installs all 12 skills into `.agents/skills/` (for Antigravity, Cursor, and Codex)
 - Copies `AGENTS.md` and links `CLAUDE.md`
 - Appends `.worktrees/` to `.gitignore`
 
@@ -46,37 +46,42 @@ However, for developers building products from scratch (0-to-1) or working on co
 
 ```
 PHASE 0: INITIATE                     PHASE 1: SLICE                       PHASE 2: EXECUTION
-(Greenfield / Pivot)                  (Continuous / Mid-Dev)               (rstack Core Engine)
+(Greenfield / Pivot)                  (Continuous / Mid-Dev)               (Hybrid SDD Engine)
 ┌───────────────────────┐             ┌─────────────────────────┐          ┌───────────────────────────┐
-│ /project-init         │             │ /linear-slice           │          │ 1. /new-feature           │
-│ • Delta interview     │ ──docs/──►  │ • Deterministic drift   │ ──issue─►│ 2. /code-structure        │
-│ • Brownfield scan     │             │ • 4 issue templates     │          │ 3. /evidence-driven-testing│
-│ • 5 Canonical docs    │             │ • Linear/GitHub labels  │          │ 4. /before-and-after      │
-│ • adr/ continuity     │             │ • < 400 lines PR sizing │          │ 5. /unslop & /greploop    │
-└───────────────────────┘             └─────────────────────────┘          └───────────────────────────┘
+│ /project-init         │             │ /linear-slice           │          │ /sdd-flow (Orchestrator)  │
+│ • Delta interview     │ ──docs/──►  │ • Deterministic drift   │ ──issue─►│ 1. /forensics (Root-cause)│
+│ • Brownfield scan     │             │ • 4 issue templates     │          │ 2. /new-feature (Worktree)│
+│ • 5 Canonical docs    │             │ • Linear/GitHub labels  │          │ 3. /code-structure (Build)│
+│ • adr/ continuity     │             │ • < 400 lines PR sizing │          │ 4. /evidence-driven (Prove│
+└───────────────────────┘             └─────────────────────────┘          │ 5. /interrogate (Pre-comm)│
+                                                                           │ 6. /unslop & /greploop    │
+                                                                           └───────────────────────────┘
 ```
 
 ---
 
-## Skills Suite (9 Skills)
+## Skills Suite (12 Skills)
 
 | Skill | Role | Purpose |
 |---|---|---|
 | [`project-init`](project-init/SKILL.md) | Phase 0 | Greenfield discovery interview + Brownfield code reverse-engineering into canonical `docs/`. |
 | [`linear-slice`](linear-slice/SKILL.md) | Phase 1 | Fast grep drift detection, 4 issue templates (`Feature`, `Refactor`, `Bug`, `Debt`), and label-gated issue creation. |
+| [`sdd-flow`](sdd-flow/SKILL.md) | Phase 2 | Hybrid orchestrator chaining Investigate -> Isolate -> Build -> Prove -> Interrogate -> Ship. |
+| [`forensics`](forensics/SKILL.md) | Phase 2 | Root-cause diagnosis, plan evaluation, schema checks, commit archaeology, and PR bot review auditing. |
 | [`new-feature`](new-feature/SKILL.md) | Phase 2 | Dedicated Git worktree and branch isolation per issue. Never build on `main`. |
 | [`code-structure`](code-structure/SKILL.md) | Phase 2 | Service layer architecture: Actions orchestrate business rules; Services implement reusable mechanics. |
 | [`evidence-driven-testing`](evidence-driven-testing/SKILL.md) | Phase 2 | Annotated screen recordings and headless Playwright probes proving acceptance criteria. |
 | [`before-and-after`](before-and-after/SKILL.md) | Phase 2 | Visual diff comparisons formatted into PR-ready markdown tables. |
-| [`unslop`](unslop/SKILL.md) | Cross-cutting | Cuts AI tells, buzzwords, and boilerplate from commit messages, PR text, and docs. |
+| [`interrogate`](interrogate/SKILL.md) | Phase 2 | Pre-commit adversarial diff audit for async crashes, OCC races, secrets, and repro tests. |
 | [`greploop`](greploop/SKILL.md) | Phase 2 | Automated Greptile review and fix cycles targeting a clean 5/5 score. |
 | [`greploop-apps`](greploop-apps/SKILL.md) | Phase 2 | Compatibility trigger (`@greptile-apps`) for large pull requests. |
+| [`unslop`](unslop/SKILL.md) | Cross-cutting | Cuts AI tells, buzzwords, and boilerplate from commit messages, PR text, and docs. |
 
 ---
 
 ## The 5 Canonical Docs (`docs/`)
 
-`rstack-sdd` strictly adheres to Docs-as-Code standards. No temporary state files (`STATE.md`, `TODO.md`) enter your repository:
+`ajstack-sdd` strictly adheres to Docs-as-Code standards. No temporary state files (`STATE.md`, `TODO.md`) enter your repository:
 
 ```
 docs/
@@ -101,7 +106,7 @@ docs/
 ```bash
 git clone https://github.com/ajayjeripothula18/ajstack-sdd.git
 mkdir -p ~/.claude/skills/
-cp -r ajstack-sdd/{project-init,linear-slice,new-feature,code-structure,evidence-driven-testing,before-and-after,greploop,greploop-apps,unslop} ~/.claude/skills/
+cp -r ajstack-sdd/{project-init,linear-slice,sdd-flow,forensics,new-feature,code-structure,evidence-driven-testing,before-and-after,interrogate,greploop,greploop-apps,unslop} ~/.claude/skills/
 ```
 In your project root, copy `AGENTS.md` and add a `CLAUDE.md` referencing it:
 ```bash
@@ -113,7 +118,7 @@ echo "@AGENTS.md" > /path/to/your/project/CLAUDE.md
 In your project repository:
 ```bash
 mkdir -p .agents/skills/
-cp -r ajstack-sdd/{project-init,linear-slice,new-feature,code-structure,evidence-driven-testing,before-and-after,greploop,greploop-apps,unslop} .agents/skills/
+cp -r ajstack-sdd/{project-init,linear-slice,sdd-flow,forensics,new-feature,code-structure,evidence-driven-testing,before-and-after,interrogate,greploop,greploop-apps,unslop} .agents/skills/
 cp ajstack-sdd/AGENTS.md .
 ```
 

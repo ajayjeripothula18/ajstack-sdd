@@ -8,6 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -189,6 +190,110 @@ function runList() {
   }
 }
 
+function runValidate() {
+  console.log(`\n🔍 Validating ajstack-sdd skills suite (${SKILLS.length} skills):\n`);
+  let hasErrors = false;
+
+  for (const skill of SKILLS) {
+    const rootDir = path.join(PACKAGE_ROOT, skill.name);
+    const skillFile = path.join(rootDir, 'SKILL.md');
+
+    if (!fs.existsSync(rootDir) || !fs.statSync(rootDir).isDirectory()) {
+      console.log(`  ❌ ${skill.name}: Missing skill directory`);
+      hasErrors = true;
+      continue;
+    }
+
+    if (!fs.existsSync(skillFile)) {
+      console.log(`  ❌ ${skill.name}: Missing SKILL.md`);
+      hasErrors = true;
+      continue;
+    }
+
+    const content = fs.readFileSync(skillFile, 'utf8');
+    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!frontmatterMatch) {
+      console.log(`  ❌ ${skill.name}: Missing or invalid YAML frontmatter`);
+      hasErrors = true;
+      continue;
+    }
+
+    const frontmatter = frontmatterMatch[1];
+    if (!frontmatter.includes('name:') || !frontmatter.includes('description:')) {
+      console.log(`  ❌ ${skill.name}: Frontmatter missing 'name' or 'description'`);
+      hasErrors = true;
+      continue;
+    }
+
+    const agySkillFile = path.join(PACKAGE_ROOT, '.agents', 'skills', skill.name, 'SKILL.md');
+    if (fs.existsSync(agySkillFile)) {
+      const agyContent = fs.readFileSync(agySkillFile, 'utf8');
+      if (content !== agyContent) {
+        console.log(`  ⚠️  ${skill.name}: Content drift between root and .agents/skills/`);
+        hasErrors = true;
+        continue;
+      }
+    }
+
+    console.log(`  ✓ ${skill.name.padEnd(24)} Valid frontmatter & parity confirmed`);
+  }
+
+  if (hasErrors) {
+    console.error('\n❌ Skill validation failed with errors.\n');
+    process.exit(1);
+  } else {
+    console.log(`\n🎉 All ${SKILLS.length} skills validated successfully with 100% integrity!\n`);
+  }
+}
+
+function runDoctor(targetDir = process.cwd()) {
+  console.log('\n🩺 Running ajstack-sdd environment doctor:\n');
+
+  const nodeVersion = process.version;
+  const major = parseInt(nodeVersion.slice(1).split('.')[0], 10);
+  const nodeOk = major >= 18;
+  console.log(`  ${nodeOk ? '✓' : '❌'} Node.js: ${nodeVersion} ${nodeOk ? '(supported)' : '(requires Node 18+)'}`);
+
+  try {
+    const gitVersion = execSync('git --version', { encoding: 'utf8' }).trim();
+    console.log(`  ✓ Git: ${gitVersion}`);
+  } catch {
+    console.log('  ❌ Git: Not found in PATH');
+  }
+
+  try {
+    const ghVersion = execSync('gh --version', { encoding: 'utf8' }).split('\n')[0].trim();
+    console.log(`  ✓ GitHub CLI: ${ghVersion}`);
+  } catch {
+    console.log('  ℹ GitHub CLI (gh): Not installed (optional, required for greploop)');
+  }
+
+  try {
+    const pyVersion = execSync('python3 --version', { encoding: 'utf8' }).trim();
+    console.log(`  ✓ Python: ${pyVersion}`);
+  } catch {
+    console.log('  ℹ Python 3: Not found (required for evidence.py and greploop)');
+  }
+
+  console.log(`\n📁 Checking project environment: ${targetDir}`);
+  const hasAgentsMd = fs.existsSync(path.join(targetDir, 'AGENTS.md'));
+  console.log(`  ${hasAgentsMd ? '✓' : '⚠️'} AGENTS.md: ${hasAgentsMd ? 'Present' : 'Missing (run npx ajstack-sdd init)'}`);
+
+  const hasClaudeSkills = fs.existsSync(path.join(targetDir, '.claude', 'skills'));
+  console.log(`  ${hasClaudeSkills ? '✓' : 'ℹ'} .claude/skills: ${hasClaudeSkills ? 'Installed' : 'Not present'}`);
+
+  const hasAgySkills = fs.existsSync(path.join(targetDir, '.agents', 'skills'));
+  console.log(`  ${hasAgySkills ? '✓' : 'ℹ'} .agents/skills: ${hasAgySkills ? 'Installed' : 'Not present'}`);
+
+  const gitignorePath = path.join(targetDir, '.gitignore');
+  let worktreeIgnored = false;
+  if (fs.existsSync(gitignorePath)) {
+    const giContent = fs.readFileSync(gitignorePath, 'utf8');
+    worktreeIgnored = giContent.includes('.worktrees');
+  }
+  console.log(`  ${worktreeIgnored ? '✓' : '⚠️'} .gitignore: ${worktreeIgnored ? '.worktrees/ ignored' : '.worktrees/ not ignored'}\n`);
+}
+
 function runHelp() {
   console.log(`
 ajstack-sdd — Spec-Driven Development Agent Workflow & Skills
@@ -201,12 +306,15 @@ COMMANDS:
   upgrade         Upgrade all installed skills to latest version without modifying custom AGENTS.md
   --global, -g    Install skills globally to ~/.claude/skills and ~/.gemini/config/skills
   list            List all available skills and descriptions
+  validate        Validate all skills' directory structure, YAML frontmatter, and parity
+  doctor          Check environment readiness (Node, Git, gh, Python, and local skills)
   --help, -h      Show this help message
 
 EXAMPLES:
   npx ajstack-sdd init               # Setup in current repo
   npx ajstack-sdd upgrade            # Upgrade skills in current repo
-  npx ajstack-sdd upgrade /path/to   # Upgrade skills in specific directory
+  npx ajstack-sdd validate           # Verify skill suite integrity
+  npx ajstack-sdd doctor             # Diagnose environment readiness
   npx ajstack-sdd --global           # Install globally on machine
   npx github:ajayjeripothula18/ajstack-sdd init   # Run directly via GitHub
 `);
@@ -236,6 +344,13 @@ switch (command) {
   case 'list':
   case 'ls':
     runList();
+    break;
+  case 'validate':
+  case 'check':
+    runValidate();
+    break;
+  case 'doctor':
+    runDoctor(args[1] && !args[1].startsWith('-') ? path.resolve(args[1]) : process.cwd());
     break;
   case '--help':
   case '-h':

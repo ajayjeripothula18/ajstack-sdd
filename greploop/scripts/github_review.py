@@ -151,10 +151,11 @@ def started_before(check, cutoff):
     return bool(started) and datetime.fromisoformat(started.replace("Z", "+00:00")) < cutoff
 
 
-def start(github, repo, pr, trigger, output, bots, stuck_after=STUCK_CHECK_SECONDS, ignored_checks=(), now=utc_now):
+def start(github, repo, pr, trigger, output, bots, stuck_after=STUCK_CHECK_SECONDS, ignored_checks=(), now=utc_now, overwrite=False):
     # Reserve the path before posting so rerunning a command cannot post twice.
     output.parent.mkdir(parents=True, exist_ok=True)
-    with output.open("x") as stream:
+    mode = "w" if overwrite else "x"
+    with output.open(mode) as stream:
         json.dump({"status": "preparing", "repo": repo, "pr": pr}, stream)
     try:
         head = github.head(repo, pr)
@@ -198,6 +199,7 @@ def wait_for_review(github, attempt, timeout, interval, clock=time.monotonic, sl
     if attempt.get("status") != "triggered":
         raise ReviewError("attempt has no confirmed trigger; inspect the PR before retrying")
     deadline = clock() + timeout
+    current_interval = float(interval)
     while True:
         head = github.head(attempt["repo"], attempt["pr"])
         if head != attempt["head"]:
@@ -209,7 +211,8 @@ def wait_for_review(github, attempt, timeout, interval, clock=time.monotonic, sl
         remaining = deadline - clock()
         if remaining <= 0:
             raise ReviewError(f"review timed out: {result['reason']}")
-        sleep(min(interval, remaining))
+        sleep(min(current_interval, remaining))
+        current_interval = min(current_interval * 1.5, 30.0)
 
 
 def positive(value):
@@ -227,6 +230,7 @@ def main():
     begin.add_argument("--pr", type=positive, required=True)
     begin.add_argument("--trigger", choices=("@greptile", "@greptile-apps"), default="@greptile")
     begin.add_argument("--output", type=Path, required=True)
+    begin.add_argument("--overwrite", action="store_true", help="overwrite output file if it exists")
     begin.add_argument("--bot", action="append", help="exact trusted login; repeat for multiple bots")
     begin.add_argument("--stuck-after", type=positive, default=STUCK_CHECK_SECONDS,
                        help="seconds after which a running Greptile check no longer blocks a new trigger")
@@ -242,7 +246,7 @@ def main():
         if args.command == "start":
             result = start(
                 github, args.repo, args.pr, args.trigger, args.output, args.bot or DEFAULT_BOTS,
-                args.stuck_after, args.ignore_check,
+                args.stuck_after, args.ignore_check, overwrite=args.overwrite,
             )
         else:
             result = wait_for_review(github, json.loads(args.attempt.read_text()), args.timeout, args.interval)

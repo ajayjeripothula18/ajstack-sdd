@@ -9,6 +9,14 @@ fi
 
 CAPTURE_SCRIPT="$1"
 shift
+
+# If playwright is resolvable in the project environment, run directly in-place to preserve local ESM imports
+if node -e 'import("playwright").then(() => process.exit(0)).catch(() => process.exit(1))' 2>/dev/null; then
+  node "$CAPTURE_SCRIPT" "$@"
+  exit $?
+fi
+
+# Fallback: Run in an isolated sandbox with the committed dependencies
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 CAPTURE_DIR=$(mktemp -d "${TMPDIR:-/tmp}/skill-playwright.XXXXXXXX")
 trap 'rm -rf -- "$CAPTURE_DIR"' EXIT

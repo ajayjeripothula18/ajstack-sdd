@@ -3,11 +3,13 @@
 # Usage: ./upload-and-copy.sh <before.png> <after.png> [--markdown]
 #
 # Options:
-#   --markdown    Generate PR markdown table and copy to clipboard
+#   --markdown          Generate PR markdown table and copy to clipboard
+#   --local             Use local storage adapter (.artifacts/screenshots/)
+#   --adapter <name>    Specify storage adapter (0x0st, blob, local)
 #
 # Environment:
-#   IMAGE_ADAPTER    Storage adapter to use (default: 0x0st)
-#                    Available: 0x0st, blob
+#   IMAGE_ADAPTER       Storage adapter to use (default: 0x0st)
+#                       Available: 0x0st, blob, local
 #
 # Adapter-specific environment variables:
 #   blob:  BLOB_UPLOAD_URL - Custom upload endpoint
@@ -37,6 +39,14 @@ while [[ $# -gt 0 ]]; do
             MARKDOWN_MODE=true
             shift
             ;;
+        --local)
+            IMAGE_ADAPTER="local"
+            shift
+            ;;
+        --adapter)
+            IMAGE_ADAPTER="$2"
+            shift 2
+            ;;
         *)
             echo "Unknown option: $1"
             exit 1
@@ -46,11 +56,11 @@ done
 
 # Validate inputs
 if [[ -z "$BEFORE_FILE" || -z "$AFTER_FILE" ]]; then
-    echo "Usage: $0 <before.png> <after.png> [--markdown]"
+    echo "Usage: $0 <before.png> <after.png> [--markdown] [--local] [--adapter <name>]"
     echo ""
     echo "Environment:"
     echo "  IMAGE_ADAPTER    Storage adapter (default: 0x0st)"
-    echo "                   Available: 0x0st, blob"
+    echo "                   Available: 0x0st, blob, local"
     exit 1
 fi
 
