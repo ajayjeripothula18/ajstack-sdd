@@ -42,7 +42,7 @@ prefix alone. Otherwise follow all steps.
      ```
      Link dependencies to avoid duplicating disk space:
      ```bash
-     ln -s ../node_modules .worktrees/<task-name>/node_modules
+     ln -s ../../node_modules .worktrees/<task-name>/node_modules
      ```
      Ensure `.worktrees/` is present in `.gitignore`. Never place worktrees loose in the project root.
    - **Cloud-Agent Environments**: When running in dedicated cloud VM sandboxes (e.g. Cursor Cloud Background Agents, Orgo cloud agents, GitHub Codespaces, remote containerized VMs), the cloud runner provisions an isolated machine per agent where container-level isolation is managed by the platform.

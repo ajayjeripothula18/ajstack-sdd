@@ -161,12 +161,12 @@ wrote or changed, not to prose you didn't touch.
 | `project-init` | Phase 0: Greenfield / Brownfield system discovery & docs generation | this repo |
 | `linear-slice` | Phase 1: Drift detection, issue slicing (4 types), Linear/GitHub gates | this repo |
 | `sdd-flow` | Phase 2: Hybrid execution orchestrator (Investigate -> Build -> Interrogate -> Ship) | this repo |
-| `forensics` | Phase 2: Read-only root cause investigation and premise validation | this repo |
+| `forensics` | Phase 2: Root-cause diagnosis, plan evaluation, schema checks & PR bot review auditing | this repo |
 | `new-feature` | Phase 2: Worktree isolation per issue branch | rstack |
 | `code-structure` | Phase 2: Service Layer architecture & Subtractive Principles | rstack |
 | `evidence-driven-testing` | Phase 2: Runtime/visual evidence recording & Playwright probes | rstack |
 | `before-and-after` | Phase 2: Before/after visual diff screenshot tables | rstack (vercel-labs) |
-| `interrogate` | Phase 2: In-session adversarial pre-flight review & repro tests | this repo |
+| `interrogate` | Phase 2: In-session adversarial pre-flight diff review, crash boundaries & repro tests | this repo |
 | `greploop` | Phase 2: Bounded Greptile automated review cycles | rstack (greptileai) |
 | `greploop-apps` | Phase 2: Compatibility entrypoint for large PRs | rstack (greptileai) |
 | `unslop` | Cross-cutting: Strips AI tone from PRs, commits, and source code comments | rstack (pstack) |

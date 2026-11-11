@@ -46,10 +46,12 @@ To guard context and maintain velocity, print and update this compact task track
 
 ### Step 1: Investigate (`/forensics`)
 - Read-only analysis. **Do not modify code in this step.**
-- Validate the issue premise:
-  - Is the reported behavior actually a bug, or is caller expectations misaligned?
-  - What are the invariants that must remain untouched?
+- Validate the issue premise & audit remediation plans:
+  - Is the reported behavior actually a bug, or are caller expectations misaligned?
+  - For PR reviews or proposed plans: run commit archaeology (`git log -n 5`) to detect stale assumptions already resolved in subsequent commits.
+  - Enforce canonical schema invariants (enum unions, transactional atomicity, API contracts) to prevent runtime validator crashes.
 - For bugs: produce an isolated reproduction script or minimal failing unit test.
+- For complex investigations or PR bot review audits, delegate to `DeepInvestigator` via the `/forensics` Delegation Engine.
 - For features: identify affected interfaces and data models in `docs/ARCHITECTURE.md`.
 
 ### Step 2: Isolate (`/new-feature`)
@@ -57,7 +59,7 @@ To guard context and maintain velocity, print and update this compact task track
 - Create a dedicated Git worktree branched from `origin/main`:
   ```bash
   git worktree add .worktrees/<feature-name> -b feat/<ISSUE-KEY>-<slug>
-  ln -s ../node_modules .worktrees/<feature-name>/node_modules
+  ln -s ../../node_modules .worktrees/<feature-name>/node_modules
   cd .worktrees/<feature-name>
   ```
 - Verify the dev server port answers *your* process before testing.
@@ -81,7 +83,13 @@ To guard context and maintain velocity, print and update this compact task track
   ```bash
   git diff origin/main
   ```
-- The reviewer persona aggressively challenges the diff for edge cases, concurrency hazards, and unhandled errors.
+- The reviewer persona aggressively challenges the diff against the 6 critical audit vectors:
+  - Async crash boundaries and orphaned locks or quota allocations.
+  - Atomic concurrency & optimistic concurrency control (OCC) races.
+  - Secret sanitization (verifying all credentials/tokens are stripped, not just primary passwords).
+  - Schema validator conformance (verifying enum union literals).
+  - API contract stability and subtractive code integrity.
+- For large diffs (> 200 LOC), delegate to `DeepInvestigator` subagent.
 - **Hard Rule**: Any valid critique must include an executable failing test or repro script.
 - Fix all confirmed issues locally.
 

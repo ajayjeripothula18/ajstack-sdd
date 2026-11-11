@@ -50,6 +50,11 @@ Read only the relevant reference:
    remain relevant until addressed, even after their lines become outdated.
 4. If the current review is 5/5, no actionable Greptile findings remain, and
    relevant checks pass, finish. Otherwise evaluate each finding in context.
+   When handling multi-comment bot reviews (> 3 findings) or disputed/complex
+   feedback, route the review to `/forensics` (Playbook B: Plan & PR Bot Review
+   Auditing) before editing code. Use commit archaeology to detect if recent
+   commits have already resolved the issue, and enforce the Hard Invariant
+   ("No Reproducible Test, No Finding") before accepting a bot critique.
    Fix valid issues within the task. For a false positive, record the reason
    and supporting evidence before resolving it. Do not change correct code
    merely to chase the score or resolve other reviewers' threads.

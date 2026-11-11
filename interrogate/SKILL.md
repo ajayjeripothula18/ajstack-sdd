@@ -9,7 +9,7 @@ description: In-session adversarial pre-flight review. Audits git diff in the wo
 
 `/interrogate` is an internal adversarial peer review run directly inside your Git worktree **before pushing to remote or opening a PR**. 
 
-Leaving code review entirely to external CI bots like Greptile is slow, wasteful, and burns CI minutes. `/interrogate` catches bugs, race conditions, edge cases, and design flaws locally within seconds.
+Leaving code review entirely to external CI bots like Greptile is slow, wasteful, and burns CI minutes. `/interrogate` catches bugs, concurrency races, unhandled async crashes, secret leaks, and schema flaws locally within seconds.
 
 ---
 
@@ -24,31 +24,58 @@ When running `/interrogate`, adopt the persona of a **Skeptical Staff Engineer**
 
 ---
 
-## Audit Checklist
+## Subagent Delegation for Large Diffs
+
+When reviewing diffs exceeding 200 lines of code, or changes modifying critical authorization, concurrency, or payment paths, delegate the adversarial audit to an isolated subagent:
+- **Antigravity**: Launch via `invoke_subagent`:
+  ```python
+  invoke_subagent(
+      TypeName="self",
+      Role="DeepInvestigator",
+      Workspace="inherit",
+      Prompt="Run adversarial diff audit against git diff origin/main. Enforce: No Reproducible Test, No Finding."
+  )
+  ```
+- **Claude Code**: Dispatch via `/boost` or subagent review task.
+- **CLI / Cursor / Codex**: Dispatch to a dedicated child agent or audit prompt.
+
+---
+
+## The 6 Critical Audit Vectors
 
 Examine the full diff against the base branch:
 ```bash
 git diff origin/main
 ```
 
-### 1. Edge Cases & Boundary Conditions
-- What happens with empty inputs, nulls, zeroes, negative numbers, or maximum allowable payloads?
-- Are off-by-one errors possible in slices, paginations, or loops?
-- Are string encodings, Unicode, or timezone offsets handled safely?
+### 1. Async Crash Boundaries & Resource Leaks
+- Do external service calls, HTTP actions, or network dispatches have unhandled promise rejections?
+- If an external call fails, does the system leave orphaned locks, leaked quotas, or dangling state reservations (e.g. state marked committed but never dispatched)?
+- Are cleanup or rollback operations guaranteed to run in `try/catch` or `finally` blocks?
 
-### 2. Concurrency & Async Safety
-- Can two concurrent requests race on this state transition or database row?
-- Are promises handled with proper error boundaries, or can an unhandled rejection crash the runtime?
-- Are timeouts, retries, and circuit breakers bounded?
+### 2. Atomic Concurrency & OCC Races
+- Can two concurrent requests, webhooks, or scheduled jobs race to read state and double-spend daily limits or quotas?
+- Are checks and mutations executed within a single atomic database transaction rather than an async read followed by a delayed write?
+- Are optimistic concurrency control (OCC) retries handled cleanly?
 
-### 3. Subtractive Integrity
+### 3. Secret Sanitization & Defense-in-Depth
+- When serializing models or returning query results over public endpoints or WebSockets, are all secrets stripped?
+- Verify serializers remove *all* sensitive fields (auth tokens, API keys, webhook secrets, private keys, internal credentials), not just primary passwords.
+- Are development fallback secrets (e.g. mock API keys) strictly blocked in production (`process.env.NODE_ENV === 'production'`)?
+
+### 4. Schema & Validator Conformance
+- Does any new field, enum value, or write argument introduced in the diff violate the canonical schema definitions?
+- Cross-reference against the project's canonical schema files (ORM models, schema validators, database DDL, API contracts) to ensure undeclared enum literals or missing properties do not trigger runtime validation crashes.
+
+### 5. API & Contract Stability
+- Does the diff arbitrarily rename exported functions, public endpoints, queries, or mutations?
+- Ensure external callers, MCP tools, and frontend clients are not broken by unversioned signature changes.
+
+### 6. Subtractive Integrity & Error Transparency
 - Did the author add defensive wrappers around code that should have simply been deleted?
 - Is there copy-pasted logic that belongs in the Service layer?
 - Are there unnecessary type casts (`as any`, `as unknown`) bypassing compiler safety?
-
-### 4. Error Transparency
-- Does the code swallow exceptions or fail silently?
-- Are user-facing errors sanitized while developer logs retain structured causality?
+- Does the code swallow exceptions or fail silently without structured logging?
 
 ---
 
@@ -63,6 +90,14 @@ Output the interrogation report in chat using this structure:
 - Files changed: N
 - Insertions: +X / Deletions: -Y (Diff budget check: < 400 LOC)
 
+#### Failure Mode Checklist
+- [ ] Async Crash Boundaries & Resource Leaks: [PASSED | VULNERABLE]
+- [ ] Atomic Concurrency & OCC Races: [PASSED | VULNERABLE]
+- [ ] Secret Sanitization & Defense-in-Depth: [PASSED | VULNERABLE]
+- [ ] Schema & Validator Conformance: [PASSED | VULNERABLE]
+- [ ] API & Contract Stability: [PASSED | VULNERABLE]
+- [ ] Subtractive Integrity: [PASSED | VULNERABLE]
+
 #### Findings
 
 ##### Finding 1: [Short Title]
@@ -72,7 +107,7 @@ Output the interrogation report in chat using this structure:
 - **Executable Reproduction**:
   ```typescript
   // Failing test proving the defect
-  it("fails when input array contains duplicate IDs during concurrent batch", async () => {
+  it("fails when external operation rejects, leaving resource slot orphaned", async () => {
     ...
   });
   ```
@@ -94,4 +129,3 @@ Output the interrogation report in chat using this structure:
 3. Update the implementation code to fix the root cause (**GREEN**).
 4. Re-run `/interrogate` until the verdict is **APPROVED**.
 5. Once approved, proceed to `/unslop` and push to remote.
-
